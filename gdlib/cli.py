@@ -22,6 +22,7 @@ from .api import (
     BASE,
     JENIS,
     JURUSAN,
+    JURUSAN_GROUPS,
     KIND_LABEL,
     KINDS,
     AuthError,
@@ -65,6 +66,10 @@ def parse_filters(args) -> dict:
         f["jurusan"] = resolve_jurusan(args.jurusan)
     if getattr(args, "tahun", None):
         f["tahun"] = args.tahun
+    for key in ("npm", "penulis", "pembimbing", "nomor_induk"):
+        v = getattr(args, key, None)
+        if v:
+            f[key] = v
     for kv in getattr(args, "filter", []) or []:
         if "=" in kv:
             k, v = kv.split("=", 1)
@@ -100,8 +105,9 @@ def _print_items(items, total):
     t.add_column("Judul", overflow="fold")
     t.add_column("Penulis/NPM", width=22, overflow="fold")
     t.add_column("Tahun", width=6)
+    t.add_column("Dilihat", width=9, justify="right")
     for i, it in enumerate(items, 1):
-        t.add_row(str(i), it.tag or it.kind, it.title, it.author, it.year)
+        t.add_row(str(i), it.tag or it.kind, it.title, it.author, it.year, it.views)
     console.print(t)
     console.print(
         f"[dim]{len(items)} item ditampilkan"
@@ -202,12 +208,17 @@ def cmd_tui(args) -> int:
 
 def cmd_filters(args) -> int:
     if args.what in ("jurusan", "semua"):
-        t = Table(title="Filter jurusan (repository)", header_style="bold cyan")
-        t.add_column("Nama jurusan / fakultas")
-        t.add_column("ID", justify="right")
-        for name, jid in JURUSAN.items():
-            t.add_row(name, jid)
+        t = Table(title="Filter jurusan (repository) — 69 prodi",
+                  header_style="bold cyan", show_lines=False)
+        t.add_column("Grup / Fakultas", style="dim")
+        t.add_column("Jurusan")
+        t.add_column("Value", justify="right", style="green")
+        for group, progs in JURUSAN_GROUPS.items():
+            for name, jid in progs:
+                t.add_row(group, name, jid)
         console.print(t)
+        console.print("[dim]Pakai: --jurusan \"Informatika\" · --jurusan if "
+                      "· --jurusan \"Sistem Informasi\" (nama boleh sebagian).[/dim]")
     if args.what in ("jenis", "semua"):
         t = Table(title="Filter jenis penulisan (repository)", header_style="bold cyan")
         t.add_column("Nama")
@@ -216,8 +227,9 @@ def cmd_filters(args) -> int:
             if code:
                 t.add_row(name, code)
         console.print(t)
-    console.print("[dim]Pakai: --jurusan \"Sistem Informasi\" · --jenis SKRIPSI "
-                  "· --tahun 2024 (nama tidak harus persis, bisa sebagian).[/dim]")
+        console.print("[dim]Pakai: --jenis SKRIPSI · --jenis tesis[/dim]")
+    console.print("[dim]Filter lain: --tahun 2024 · --npm 50422108 · "
+                  "--penulis nama · --pembimbing nama · --filter K=V[/dim]")
     return 0
 
 
@@ -246,10 +258,13 @@ def build_parser() -> argparse.ArgumentParser:
     ss.add_argument("query", nargs="?", default="", help="kata kunci")
     ss.add_argument("--page", type=int, default=1)
     ss.add_argument("--jenis", help="filter jenis penulisan, mis. SKRIPSI (lihat `gdlib filters`)")
-    ss.add_argument("--jurusan", help="filter jurusan, mis. \"Sistem Informasi\" (lihat `gdlib filters`)")
+    ss.add_argument("--jurusan", help="filter jurusan/fakultas, mis. \"Informatika\" atau fasilkom")
     ss.add_argument("--tahun", help="filter tahun, mis. 2024")
+    ss.add_argument("--npm", help="filter nomor pokok mahasiswa, mis. 50422108")
+    ss.add_argument("--penulis", help="filter nama penulis")
+    ss.add_argument("--pembimbing", help="filter nama pembimbing")
     ss.add_argument("--filter", action="append", metavar="K=V",
-                    help="filter tambahan, mis. penulis=onno")
+                    help="filter tambahan, mis. nomor_induk=123")
     ss.add_argument("--json", action="store_true", help="keluaran JSON")
     ss.add_argument("--no-urls", action="store_true", help="jangan cetak URL")
     ss.set_defaults(func=cmd_search)
@@ -263,8 +278,11 @@ def build_parser() -> argparse.ArgumentParser:
                     help="maksimum item dari hasil pencarian (default 10)")
     sd.add_argument("-o", "--out", default="downloads", help="folder tujuan")
     sd.add_argument("--jenis", help="filter jenis penulisan, mis. SKRIPSI")
-    sd.add_argument("--jurusan", help="filter jurusan, mis. \"Sistem Informasi\"")
+    sd.add_argument("--jurusan", help="filter jurusan/fakultas, mis. \"Informatika\"")
     sd.add_argument("--tahun", help="filter tahun, mis. 2024")
+    sd.add_argument("--npm", help="filter nomor pokok mahasiswa")
+    sd.add_argument("--penulis", help="filter nama penulis")
+    sd.add_argument("--pembimbing", help="filter nama pembimbing")
     sd.add_argument("--filter", action="append", metavar="K=V")
     sd.add_argument("--report", help="simpan laporan JSON ke file")
     sd.set_defaults(func=cmd_download)

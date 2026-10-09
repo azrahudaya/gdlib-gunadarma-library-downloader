@@ -38,6 +38,10 @@ E-Paper, E-Book UG, Jurnal Ilmiah, dan pencarian Katalog OPAC.
 - E-Book: halaman `/ebooks/<slug>/baca` menyediakan
   `<div id="readSessionMeta" data-pdf-url="...">` → PDF e-book (perlu login).
 - E-Paper: koleksi karya ilmiah yang sama, dengan reader bawaan (perlu login).
+- **Filter `jurusan`:** server hanya menerima **satu** id prodi (nilai berkoma
+  hanya memakai nilai pertama), dan value `fak_*` (semua fakultas) tidak
+  berfungsi di endpoint GET. Karena itu filter jurusan disediakan per prodi
+  (69 prodi) yang dikelompokkan per fakultas, bukan per fakultas.
 
 ---
 
@@ -104,8 +108,11 @@ Gunakan launcher `./gdlib.sh` (otomatis memakai venv proyek):
 
 # Filter pencarian repository (nama boleh sebagian, lihat `gdlib filters`)
 ./gdlib.sh filters                               # daftar semua jurusan & jenis
-./gdlib.sh search repository "iot" --jurusan "Sistem Informasi" --jenis SKRIPSI --tahun 2024
-./gdlib.sh search repository "" --filter penulis=onno
+./gdlib.sh search repository "iot" --jurusan "Informatika" --jenis SKRIPSI --tahun 2024
+./gdlib.sh search repository "" --jurusan if     # alias: if=Informatika, si, sk, mi…
+./gdlib.sh search repository "" --npm 50422108   # cari by NPM
+./gdlib.sh search repository "" --penulis onno   # cari by nama penulis
+./gdlib.sh search repository "" --pembimbing ravi
 
 # Unduh hasil pencarian (N item pertama)
 ./gdlib.sh download repository "klasifikasi serangan jaringan" -n 3 -o ~/Downloads/ug
@@ -127,18 +134,30 @@ Gunakan launcher `./gdlib.sh` (otomatis memakai venv proyek):
 ```
 
 Baris atas: pilih koleksi (Repository / E-Paper / E-Book / Jurnal / Katalog) +
-kotak kata kunci + tombol Cari. Baris kedua: **filter jurusan, jenis penulisan,
-dan tahun** (aktif untuk Repository).
+kotak kata kunci + tombol Cari. Baris kedua: **filter** (Repository) — tombol
+**Fakultas/Jurusan**, dropdown jenis penulisan, kolom tahun, tombol **Filter
+lain** (NPM/penulis/pembimbing) dan **Reset**. Baris chip menampilkan filter
+yang sedang aktif. Kiri bawah: navigasi halaman (F6/F7).
+
+**Filter jurusan paling gampang:** tekan **F2** (atau tombol
+"Fakultas/Jurusan…") → muncul picker. Ketik mis. `info` → pilih
+**Informatika (S1)**, Enter. Pencarian langsung dijalankan ulang dengan filter
+itu. Daftar dikelompokkan per fakultas dan bisa dicari lewat nama atau alias
+(`if` = Informatika, `si` = Sistem Informasi, `mi` = Manajemen Informatika…).
 
 Pintasan:
 
 | Tombol | Fungsi |
 |---|---|
 | `/` | Fokus ke kolom pencarian |
-| `F5` / Enter | Cari |
+| `F2` | Pilih jurusan/fakultas (picker yang bisa dicari) |
+| `F3` | Filter lanjutan (NPM / penulis / pembimbing) |
+| `F4` | Reset semua filter |
+| `F5` / Enter | Cari (mulai dari halaman 1) |
+| `F6` / `F7` | Halaman sebelumnya / berikutnya |
 | `F1` | Login (pakai kredensial `.env`) |
 | `F9` | Unduh item yang disorot |
-| `F10` | Unduh semua hasil pencarian |
+| `F10` | Unduh semua hasil di halaman ini |
 | `Ctrl+Q` | Keluar |
 
 Panel kanan menampilkan metadata + daftar berkas; panel bawah menampilkan

@@ -56,84 +56,166 @@ JENIS = {
     "DISERTASI": "disertasi",
     "PENELITIAN HIBAH": "hibah",
     "PENULISAN ILMIAH JENJANG D3": "pi",
-    "PENULISAN ILMIAH JENJANG S1 (SSM)": "ssm",
+    "PENULISAN ILMIAH JENJANG S1 (SETARA SARJANA MUDA / SSM)": "ssm",
     "PENULISAN/PENELITIAN DOSEN": "penelitian",
     "SKRIPSI": "skripsi",
     "TESIS": "tesis",
 }
 
-# Jurusan / fakultas (filter `jurusan`). Nama -> id yang dipakai server.
-JURUSAN = {
-    "Kebidanan (S1)": "9",
-    "Ilmu Ekonomi (S3)": "29",
-    "Ilmu Komunikasi (S3)": "67",
-    "Psikologi (S3)": "36",
-    "Teknologi Informasi (S3)": "30",
-    "Akuntansi (S1)": "13",
-    "Akuntansi Komputer (D3)": "19",
-    "Ekonomi Syariah (S1)": "40",
-    "Manajemen (S1)": "12",
-    "Manajemen Keuangan (D3)": "37",
-    "Manajemen Pemasaran (D3)": "18",
-    "Farmasi (S1)": "43",
-    "Manajemen Informatika (D3)": "16",
-    "Sistem Informasi (S1)": "1",
-    "Sistem Komputer (S1)": "2",
-    "Teknik Komputer (D3)": "11",
-    "Komunikasi (S1)": "32",
-    "Kedokteran (S1)": "38",
-    "Ilmu Komunikasi Pendidikan (S2)": "60",
-    "Komunikasi Pariwisata (S2)": "68",
-    "Komunikasi Pemasaran (S2)": "63",
-    "Komunikasi Politik (S2)": "44",
-    "Marketing Komunikasi (S2)": "59",
-    "Teknologi dan New Media (S2)": "58",
-    "Akuntansi Pemerintahan (S2)": "27",
-    "Asuransi (S2)": "20",
-    "Keuangan Syariah (S2)": "100",
-    "Komunikasi Bisnis (S2)": "45",
-    "Manajemen Pemasaran (S2)": "101",
-    "Manajemen Sumber Daya Manusia (S2)": "64",
-    "Perbankan (S2)": "28",
-    "Pengembangan Produk dan Desain (S2)": "46",
-    "Perangkat Lunak Sistem Informasi (S2)": "25",
-    "Sistem Informasi Akuntansi (S2)": "22",
-    "Sistem Informasi Bisnis (S2)": "21",
-    "Teknik Informasi Pertanian (S2)": "65",
-    "Psikologi Industri dan Organisasi (S2)": "34",
-    "Psikologi Industri dan Organisasi Profesi (S2)": "53",
-    "Psikologi Klinis Profesi (S2)": "35",
-    "Psikologi Komunikasi (S2)": "26",
-    "Kajian Budaya (S2)": "102",
-    "Penerjemahan (S2)": "24",
-    "Desain Arsitektur (S2)": "61",
-    "Riset Arsitektur dan Perkotaan (S2)": "62",
-    "Elektronika Devais (S2)": "47",
-    "Elektronika Telekomunikasi (S2)": "23",
-    "Teknik Kontrol Industri (S2)": "48",
-    "Teknologi Informasi (S2)": "49",
-    "Teknik Industri dan Manajemen (S2)": "66",
-    "Rekayasa Manufaktur Aditif (S2)": "57",
-    "Rekayasa Sistem Energi (S2)": "56",
-    "Rekayasa Sistem Manufaktur (S2)": "33",
-    "Arsitektur dan Perkotaan (S2)": "31",
-    "Manajemen Rekayasa Infrastruktur (S2)": "50",
-    "Sistem Informasi Infrastruktur (S2)": "51",
-    "Paket (88)": "10",
-    "Psikologi (S1)": "15",
-    "Pariwisata (S1)": "39",
-    "Sastra Inggris (S1)": "14",
-    "Sastra Tiongkok (S1)": "41",
-    "Desain Interior (S1)": "17",
-    "Teknik Arsitektur (S1)": "8",
-    "Teknik Sipil (S1)": "7",
-    "Agroteknologi (S1)": "42",
-    "Informatika (S1)": "6",
-    "Teknik Elektro (S1)": "4",
-    "Teknik Industri (S1)": "3",
-    "Teknik Mesin (S1)": "5",
-    "Tidak Terkategori (99)": "99",
+# Jurusan / fakultas (filter `jurusan`), lengkap 96 opsi & dikelompokkan
+# persis seperti <optgroup> di situs. Urutan grup: prodi dulu, lalu "Semua X".
+JURUSAN_GROUPS: dict[str, list[tuple[str, str]]] = {
+    "Ilmu Komputer & Teknologi Informasi": [
+        ("Manajemen Informatika (D3)", "16"),
+        ("Sistem Informasi (S1)", "1"),
+        ("Sistem Komputer (S1)", "2"),
+        ("Teknik Komputer (D3)", "11"),
+        ("Informatika (S1)", "6"),
+    ],
+    "Teknologi Industri": [
+        ("Agroteknologi (S1)", "42"),
+        ("Informatika (S1)", "6"),
+        ("Teknik Elektro (S1)", "4"),
+        ("Teknik Industri (S1)", "3"),
+        ("Teknik Mesin (S1)", "5"),
+    ],
+    "Teknik Sipil & Perencanaan": [
+        ("Desain Interior (S1)", "17"),
+        ("Teknik Arsitektur (S1)", "8"),
+        ("Teknik Sipil (S1)", "7"),
+    ],
+    "Ekonomi": [
+        ("Akuntansi (S1)", "13"),
+        ("Akuntansi Komputer (D3)", "19"),
+        ("Ekonomi Syariah (S1)", "40"),
+        ("Manajemen (S1)", "12"),
+        ("Manajemen Keuangan (D3)", "37"),
+        ("Manajemen Pemasaran (D3)", "18"),
+    ],
+    "Psikologi": [
+        ("Psikologi (S1)", "15"),
+    ],
+    "Sastra & Budaya": [
+        ("Pariwisata (S1)", "39"),
+        ("Sastra Inggris (S1)", "14"),
+        ("Sastra Tiongkok (S1)", "41"),
+    ],
+    "Ilmu Komunikasi": [
+        ("Komunikasi (S1)", "32"),
+    ],
+    "Ilmu Kesehatan & Farmasi": [
+        ("Farmasi (S1)", "43"),
+    ],
+    "Kedokteran": [
+        ("Kedokteran (S1)", "38"),
+    ],
+    "Akademi Kebidanan": [
+        ("Kebidanan (S1)", "9"),
+    ],
+    "Magister Manajemen Sistem Informasi": [
+        ("Pengembangan Produk dan Desain (S2)", "46"),
+        ("Perangkat Lunak Sistem Informasi (S2)", "25"),
+        ("Sistem Informasi Akuntansi (S2)", "22"),
+        ("Sistem Informasi Bisnis (S2)", "21"),
+        ("Teknik Informasi Pertanian (S2)", "65"),
+    ],
+    "Magister Teknik Elektro": [
+        ("Elektronika Devais (S2)", "47"),
+        ("Elektronika Telekomunikasi (S2)", "23"),
+        ("Teknik Kontrol Industri (S2)", "48"),
+        ("Teknologi Informasi (S2)", "49"),
+    ],
+    "Magister Manajemen": [
+        ("Akuntansi Pemerintahan (S2)", "27"),
+        ("Asuransi (S2)", "20"),
+        ("Keuangan Syariah (S2)", "100"),
+        ("Komunikasi Bisnis (S2)", "45"),
+        ("Manajemen Pemasaran (S2)", "101"),
+        ("Manajemen Sumber Daya Manusia (S2)", "64"),
+        ("Perbankan (S2)", "28"),
+    ],
+    "Magister Ilmu Komunikasi": [
+        ("Ilmu Komunikasi Pendidikan (S2)", "60"),
+        ("Komunikasi Pariwisata (S2)", "68"),
+        ("Komunikasi Pemasaran (S2)", "63"),
+        ("Komunikasi Politik (S2)", "44"),
+        ("Marketing Komunikasi (S2)", "59"),
+        ("Teknologi dan New Media (S2)", "58"),
+    ],
+    "Magister Psikologi": [
+        ("Psikologi Industri dan Organisasi (S2)", "34"),
+        ("Psikologi Industri dan Organisasi Profesi (S2)", "53"),
+        ("Psikologi Klinis Profesi (S2)", "35"),
+        ("Psikologi Komunikasi (S2)", "26"),
+    ],
+    "Magister Sastra": [
+        ("Kajian Budaya (S2)", "102"),
+        ("Penerjemahan (S2)", "24"),
+    ],
+    "Magister Teknik Arsitektur": [
+        ("Desain Arsitektur (S2)", "61"),
+        ("Riset Arsitektur dan Perkotaan (S2)", "62"),
+    ],
+    "Magister Teknik Industri & Manajemen": [
+        ("Teknik Industri dan Manajemen (S2)", "66"),
+    ],
+    "Magister Teknik Mesin": [
+        ("Rekayasa Manufaktur Aditif (S2)", "57"),
+        ("Rekayasa Sistem Energi (S2)", "56"),
+        ("Rekayasa Sistem Manufaktur (S2)", "33"),
+    ],
+    "Magister Teknik Sipil": [
+        ("Arsitektur dan Perkotaan (S2)", "31"),
+        ("Manajemen Rekayasa Infrastruktur (S2)", "50"),
+        ("Sistem Informasi Infrastruktur (S2)", "51"),
+    ],
+    "Doktor Teknologi Informasi": [
+        ("Teknologi Informasi (S3)", "30"),
+    ],
+    "Doktor Ilmu Ekonomi": [
+        ("Ilmu Ekonomi (S3)", "29"),
+    ],
+    "Doktor Ilmu Komunikasi": [
+        ("Ilmu Komunikasi (S3)", "67"),
+    ],
+    "Doktor Psikologi": [
+        ("Psikologi (S3)", "36"),
+    ],
+    "Lainnya": [
+        ("Paket (88)", "10"),
+        ("Tidak Terkategori (99)", "99"),
+    ],
 }
+
+# Nama jurusan -> id (flatten dari grup).
+JURUSAN: dict[str, str] = {
+    name: jid for progs in JURUSAN_GROUPS.values() for name, jid in progs
+}
+
+# Nama -> value untuk resolve & tampilan.
+JURUSAN_ANY: dict[str, str] = dict(JURUSAN)
+
+# Alias pencarian populer (biar "informatika"/"if" tetap nemu prodi yang tepat).
+JURUSAN_ALIAS: dict[str, str] = {
+    "informatika": "6",
+    "if": "6",
+    "si": "1",
+    "sk": "2",
+    "tk": "11",
+    "mi": "16",
+    "d3 mi": "16",
+    "manajemen informatika": "16",
+}
+
+
+def jurusan_group_of(value: str) -> str:
+    """Nama grup untuk sebuah value jurusan (untuk header di picker)."""
+    for group, progs in JURUSAN_GROUPS.items():
+        if any(jid == value for _, jid in progs):
+            return group
+    return ""
+
+
 
 
 class GdError(Exception):
@@ -178,15 +260,59 @@ def _clean(s: str) -> str:
 
 
 def resolve_jurusan(value: str) -> str:
-    """Terima nama jurusan atau id; kembalikan id server."""
+    """Terima nama jurusan/fakultas atau id; kembalikan value server."""
     if not value:
         return ""
-    if value in JURUSAN:
-        return JURUSAN[value]
-    for name, jid in JURUSAN.items():
-        if value.lower() in name.lower():
+    v = value.strip()
+    if v in JURUSAN_ANY:
+        return JURUSAN_ANY[v]
+    if re.fullmatch(r"fak_\d+", v) or re.fullmatch(r"\d+", v):
+        return v
+    low = v.lower()
+    if low in JURUSAN_ALIAS:
+        return JURUSAN_ALIAS[low]
+    for name, jid in JURUSAN_ANY.items():
+        if low in name.lower():
             return jid
     return value
+
+
+def label_for_jurusan(value: str) -> str:
+    """Kebalikannya: value server -> nama yang enak dibaca (untuk chip filter)."""
+    if not value:
+        return ""
+    for name, jid in JURUSAN_ANY.items():
+        if jid == value:
+            return name
+    return value
+
+
+def search_jurusan(query: str, limit: int = 40) -> list[tuple[str, str]]:
+    """Cari opsi jurusan/fakultas untuk picker.
+
+    Kembalikan list (nama, value) dengan peringkat: awalan nama > nama
+    mengandung > alias cocok. Mengembalikan semua bila query kosong.
+    """
+    q = (query or "").strip().lower()
+    entries = list(JURUSAN_ANY.items())
+    if not q:
+        return entries[:limit]
+    scored: list[tuple[int, str, str]] = []
+    alias_hit = JURUSAN_ALIAS.get(q)
+    for name, val in entries:
+        n = name.lower()
+        if n.startswith(q):
+            score = 0
+        elif q in n:
+            score = 1
+        else:
+            score = 9
+        if alias_hit and val == alias_hit:
+            score = min(score, 0)
+        if score < 9:
+            scored.append((score, name, val))
+    scored.sort(key=lambda t: (t[0], t[1]))
+    return [(n, v) for _, n, v in scored[:limit]]
 
 
 def resolve_jenis(value: str) -> str:
@@ -208,6 +334,7 @@ class Item:
     id: str = ""
     author: str = ""
     year: str = ""
+    views: str = ""
     tag: str = ""
     abstract: str = ""
     files: list = field(default_factory=list)  # [{label,url,access}]
@@ -355,12 +482,13 @@ class GunadarmaClient:
                 spans = [_clean(s.get_text()) for s in a.select(".meta-row span")]
                 author = spans[0] if spans else ""
                 year = next((s for s in spans if re.fullmatch(r"(19|20)\d{2}", s)), "")
+                views = next((s for s in spans if "dilihat" in s.lower()), "")
                 abst_el = a.select_one(".abst")
                 isbn_el = a.select_one(".pub-card-isbn")
                 items.append(Item(
                     kind=kind, title=_clean(h3.get_text()) if h3 else "", url=url,
                     id=url.rstrip("/").rsplit("/", 1)[-1],
-                    author=author, year=year,
+                    author=author, year=year, views=views,
                     tag=_clean(tag_el.get_text()) if tag_el else "",
                     abstract=_clean(abst_el.get_text()) if abst_el else (
                         _clean(isbn_el.get_text()) if isbn_el else "")))
@@ -401,8 +529,8 @@ class GunadarmaClient:
                     tag=_clean(badge.get_text()) if badge else ""))
 
         total = None
-        m = re.search(r"(?:<strong>)?([\d.,]+)(?:</strong>)?\s*(?:karya|e-book|artikel|judul|e-paper)",
-                      html_text)
+        flat = _clean(BeautifulSoup(html_text, "html.parser").get_text(" "))
+        m = re.search(r"([\d.,]+)\s*(?:karya|e-book|artikel|judul|hasil|e-paper)", flat)
         if m:
             try:
                 total = int(re.sub(r"[.,]", "", m.group(1)))
