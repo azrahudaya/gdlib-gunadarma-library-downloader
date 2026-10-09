@@ -130,6 +130,22 @@ Gunakan launcher `./gdlib.sh` (otomatis memakai venv proyek):
 ./gdlib.sh download repository "jaringan" -n 2 --report laporan.json
 ```
 
+### Unduh banyak sekaligus (batch)
+
+`scripts/batch_download.py` mengunduh banyak karya **lengkap** (semua berkas),
+satu folder per karya, dan **bisa dilanjutkan** bila terhenti (progres dicatat
+di `state.jsonl`):
+
+```bash
+# 50 skripsi Informatika tahun 2026 (di atas 2025), semua berkas
+./.venv/bin/python scripts/batch_download.py --limit 50 \
+    --jurusan 6 --jenis skripsi --tahun 2026 -o ~/Downloads/gdlib
+```
+
+Opsi: `--limit N`, `--jurusan <id|nama>`, `--jenis <kode>`, `--tahun <thn>`,
+`-o <folder>`, `--state <file>`, `--log <file>`. Jalankan ulang perintah yang
+sama untuk melanjutkan yang belum selesai (yang sudah beres otomatis dilewati).
+
 ### TUI
 
 ```bash
@@ -179,6 +195,8 @@ gdlib-dl/
 │   ├── cli.py        # antarmuka CLI (argparse + rich)
 │   ├── tui.py        # antarmuka TUI (textual)
 │   └── __main__.py   # python -m gdlib
+├── scripts/
+│   └── batch_download.py  # unduh banyak karya (resumable)
 ├── .env.example
 ├── requirements.txt
 ├── pyproject.toml
