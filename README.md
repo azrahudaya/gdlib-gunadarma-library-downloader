@@ -114,10 +114,13 @@ Gunakan launcher `./gdlib.sh` (otomatis memakai venv proyek):
 ./gdlib.sh search repository "" --penulis onno   # cari by nama penulis
 ./gdlib.sh search repository "" --pembimbing ravi
 
-# Unduh hasil pencarian (N item pertama)
-./gdlib.sh download repository "klasifikasi serangan jaringan" -n 3 -o ~/Downloads/ug
-./gdlib.sh download epaper "sistem informasi" -n 1 -o ~/Downloads/ug   # perlu login
+# Unduh hasil pencarian (N item pertama) — tiap karya masuk subfolder sendiri
+./gdlib.sh download repository "klasifikasi serangan jaringan" -n 3 -o ~/Downloads/gdlib
+./gdlib.sh download epaper "sistem informasi" -n 1 -o ~/Downloads/gdlib   # perlu login
 ./gdlib.sh download ebooks "ekonomi" -n 5          # perlu login
+
+# Struktur hasil: <folder-induk>/<JUDUL (NPM, TAHUN)>/<berkas…>
+# contoh: ~/Downloads/gdlib/PENERAPAN METODE … (50422108, 2026)/01_COVER_PENULISAN.pdf
 
 # Unduh dari URL / slug tertentu (boleh berkali-kali)
 ./gdlib.sh download --url "https://library.gunadarma.ac.id/repository/<slug>"
@@ -161,7 +164,9 @@ Pintasan:
 | `Ctrl+Q` | Keluar |
 
 Panel kanan menampilkan metadata + daftar berkas; panel bawah menampilkan
-progress dan log unduhan.
+progress dan log unduhan. **Setiap karya diunduh ke subfoldernya sendiri** di
+dalam folder induk (`~/Downloads/gdlib/`), dinamai `<JUDUL> (<NPM>, <TAHUN>)`,
+jadi tiap skripsi rapi terpisah.
 
 ---
 

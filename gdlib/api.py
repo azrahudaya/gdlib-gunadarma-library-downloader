@@ -259,6 +259,13 @@ def _clean(s: str) -> str:
     return re.sub(r"\s+", " ", s or "").strip()
 
 
+def safe_name(text: str, maxlen: int = 120) -> str:
+    """Bersihkan teks agar aman dipakai sebagai nama file/folder."""
+    t = re.sub(r'[<>:"/\\|?*\x00-\x1f]', " ", text or "")
+    t = re.sub(r"\s+", " ", t).strip().strip(".")
+    return t[:maxlen].strip()
+
+
 def resolve_jurusan(value: str) -> str:
     """Terima nama jurusan/fakultas atau id; kembalikan value server."""
     if not value:
@@ -333,10 +340,12 @@ class Item:
     url: str
     id: str = ""
     author: str = ""
+    npm: str = ""
     year: str = ""
     views: str = ""
     tag: str = ""
     abstract: str = ""
+    meta_extra: str = ""
     files: list = field(default_factory=list)  # [{label,url,access}]
 
     def to_dict(self) -> dict:
@@ -575,6 +584,8 @@ class GunadarmaClient:
             if h:
                 item.title = _clean(h.get_text())
 
+        self._parse_detail_meta(soup, item, r.text)
+
         files = []
         for a in soup.select("a.btn-doc-action"):
             href = a.get("href") or a.get("data-src")
@@ -597,6 +608,78 @@ class GunadarmaClient:
             files.append({"label": label or "DOKUMEN", "url": href, "access": access})
         item.files = files
         return item
+
+    @staticmethod
+    def _parse_detail_meta(soup: BeautifulSoup, item: Item, text: str) -> None:
+        """Ambil nama penulis, NPM, tahun, prodi, jenis dari halaman detail."""
+        # Label ("Penulis / Mahasiswa", "Nomor Induk", "Program Studi / Jenjang",
+        # ...) selalu di dalam <span class="text-muted ..."> diikuti <strong>.
+        meta: dict[str, str] = {}
+        for span in soup.find_all("span", class_=re.compile("text-muted")):
+            label = _clean(span.get_text())
+            if not label or len(label) > 40:
+                continue
+            strong = span.find_next_sibling("strong")
+            if strong is None:
+                continue
+            value = _clean(strong.get_text(" ", strip=True))
+            if value and label not in meta:
+                meta[label] = value
+
+        def pick(*keys) -> str:
+            for k, v in meta.items():
+                kl = k.lower()
+                if any(key in kl for key in keys):
+                    return v
+            return ""
+
+        author_block = pick("penulis", "mahasiswa", "pengarang")
+        if author_block:
+            item.author = author_block
+        npm = ""
+        for label in ("penulis", "mahasiswa", "pengarang"):
+            for k, v in meta.items():
+                if label in k.lower():
+                    m = re.search(r"NPM\s*[:/]?\s*(\d{6,})", v)
+                    if m:
+                        npm = m.group(1)
+                        break
+            if npm:
+                break
+        if not npm:
+            m = re.search(r"NPM\s*[:/]?\s*(\d{6,})", text)
+            if m:
+                npm = m.group(1)
+        item.npm = npm
+        year = ""
+        nomor = pick("nomor induk")
+        for y in reversed(re.findall(r"(\d{4})\b", nomor)):
+            if re.match(r"(19|20)\d{2}", y):
+                year = y
+                break
+        if not year:
+            m = re.search(r'"datePublished"\s*:\s*"(\d{4})', text)
+            if m:
+                year = m.group(1)
+        if year:
+            item.year = year
+        if not item.tag:
+            item.tag = pick("jenis")
+        prodi = pick("program studi", "jurusan")
+        fakultas = pick("fakultas")
+        if prodi or fakultas:
+            item.meta_extra = "; ".join(
+                x for x in (prodi, fakultas) if x)
+
+    def folder_name(self, item: Item) -> str:
+        """Nama subfolder per-karya: 'JUDUL (NPM, TAHUN)' (judul dipangkas bila perlu)."""
+        limit = 180
+        title = safe_name(item.title, maxlen=limit) or item.id or "tanpa_judul"
+        bits = [b for b in (item.npm, item.year) if b]
+        suffix = f" ({', '.join(bits)})" if bits else ""
+        title = title[: max(20, limit - len(suffix))].strip()
+        return safe_name(title + suffix, maxlen=limit)
+
 
     @staticmethod
     def _kind_from_url(url: str) -> str:
@@ -629,6 +712,19 @@ class GunadarmaClient:
 
     def epaper_fid_url(self, fid: str) -> str:
         return f"{BASE}/epaper/fid/{fid}"
+
+    def page_title(self, url: str) -> str:
+        """Judul halaman (og:title / heading) — dipakai untuk nama folder."""
+        try:
+            r = self.s.get(url, timeout=self.timeout)
+            soup = BeautifulSoup(r.text, "html.parser")
+            og = soup.select_one('meta[property="og:title"]')
+            if og and og.get("content"):
+                return _clean(str(og.get("content"))).split(" — ")[0]
+            h = soup.select_one("h1, h2, h3")
+            return _clean(h.get_text()) if h else ""
+        except Exception:  # noqa: BLE001
+            return ""
 
     # ------------------------------------------------------------ ebook journal
     def ebook_pdf_url(self, item_or_url) -> str:
@@ -758,6 +854,7 @@ class GunadarmaClient:
                 item = self.get_detail(url)
             except GdError as e:
                 log(f"  ! login untuk berkas terbatas gagal: {e}")
+        dest_dir = os.path.join(out_dir, self.folder_name(item))
         # Ambil peta fid e-paper sekali bila ada berkas lewat reader.
         toc = None
         reader_url = None
@@ -781,14 +878,14 @@ class GunadarmaClient:
                 href = f["url"]
                 if "/repository/file/" in href:
                     path, _ = self.download(
-                        href, out_dir, filename=fname, referer=url,
+                        href, dest_dir, filename=fname, referer=url,
                         progress=(lambda d, t, _l=label: progress(_l, d, t)) if progress else None)
                 elif "/epaper/" in href:
                     fid = (toc or {}).get(label)
                     if not fid:
                         raise NotFoundError("berkas tidak tersedia di reader e-paper.")
                     path, _ = self.download(
-                        self.epaper_fid_url(fid), out_dir, filename=fname,
+                        self.epaper_fid_url(fid), dest_dir, filename=fname,
                         referer=reader_url,
                         progress=(lambda d, t, _l=label: progress(_l, d, t)) if progress else None)
                 elif "/login" in href:
@@ -797,10 +894,12 @@ class GunadarmaClient:
                     raise NotFoundError("jenis tautan tidak dikenal.")
                 log(f"  ✓ {label} -> {os.path.basename(path)}")
                 results.append({"kind": "repository", "title": item.title,
+                                "folder": dest_dir,
                                 "label": label, "path": path, "status": "ok"})
             except Exception as e:  # noqa: BLE001
                 log(f"  ✗ {label}: {e}")
                 results.append({"kind": "repository", "title": item.title,
+                                "folder": dest_dir,
                                 "label": label, "status": "error", "error": str(e)})
         return results
 
@@ -813,19 +912,24 @@ class GunadarmaClient:
         if not toc:
             log(f"[e-paper] {url}: tidak ada berkas.")
             return []
+        title = self.page_title(url)
+        folder = safe_name(title) or url.rstrip("/").rsplit("/", 1)[-1][:40]
+        dest_dir = os.path.join(out_dir, folder)
         results = []
         for i, (label, fid) in enumerate(toc.items(), 1):
             fname = f"{i:02d}_" + re.sub(r"[^\w\-]+", "_", label)[:60].strip("_")
             try:
                 path, _ = self.download(
-                    self.epaper_fid_url(fid), out_dir, filename=fname, referer=url,
+                    self.epaper_fid_url(fid), dest_dir, filename=fname, referer=url,
                     progress=(lambda d, t, _l=label: progress(_l, d, t)) if progress else None)
                 log(f"  ✓ {label} -> {os.path.basename(path)}")
-                results.append({"kind": "epaper", "url": url, "label": label,
+                results.append({"kind": "epaper", "url": url, "title": title,
+                                "folder": dest_dir, "label": label,
                                 "path": path, "status": "ok"})
             except Exception as e:  # noqa: BLE001
                 log(f"  ✗ {label}: {e}")
-                results.append({"kind": "epaper", "url": url, "label": label,
+                results.append({"kind": "epaper", "url": url, "title": title,
+                                "folder": dest_dir, "label": label,
                                 "status": "error", "error": str(e)})
         return results
 
@@ -836,16 +940,19 @@ class GunadarmaClient:
         except GdError as e:
             log(f"[e-book] {item.title}: {e}")
             return [{"kind": "ebooks", "title": item.title, "status": "error", "error": str(e)}]
+        dest_dir = os.path.join(out_dir, self.folder_name(item))
         fname = item.slug()
         try:
             path, _ = self.download(
-                src, out_dir, filename=fname, referer=url.rstrip("/") + "/baca",
+                src, dest_dir, filename=fname, referer=url.rstrip("/") + "/baca",
                 progress=(lambda d, t: progress(item.title, d, t)) if progress else None)
             log(f"  ✓ {item.title} -> {os.path.basename(path)}")
-            return [{"kind": "ebooks", "title": item.title, "path": path, "status": "ok"}]
+            return [{"kind": "ebooks", "title": item.title, "folder": dest_dir,
+                     "path": path, "status": "ok"}]
         except Exception as e:  # noqa: BLE001
             log(f"  ✗ {item.title}: {e}")
-            return [{"kind": "ebooks", "title": item.title, "status": "error", "error": str(e)}]
+            return [{"kind": "ebooks", "title": item.title, "folder": dest_dir,
+                     "status": "error", "error": str(e)}]
 
     def _download_journal(self, url, out_dir, log):
         item = self.get_detail(url)
@@ -856,13 +963,16 @@ class GunadarmaClient:
         if not src:
             log(f"[jurnal] {item.title}: tidak ada PDF yang bisa diunduh (hanya abstrak).")
             return [{"kind": "journal", "title": item.title, "status": "no-file"}]
+        dest_dir = os.path.join(out_dir, self.folder_name(item))
         try:
-            path, _ = self.download(src, out_dir, filename=item.slug(), referer=url)
+            path, _ = self.download(src, dest_dir, filename=item.slug(), referer=url)
             log(f"  ✓ {item.title} -> {os.path.basename(path)}")
-            return [{"kind": "journal", "title": item.title, "path": path, "status": "ok"}]
+            return [{"kind": "journal", "title": item.title, "folder": dest_dir,
+                     "path": path, "status": "ok"}]
         except Exception as e:  # noqa: BLE001
             log(f"  ✗ {item.title}: {e}")
-            return [{"kind": "journal", "title": item.title, "status": "error", "error": str(e)}]
+            return [{"kind": "journal", "title": item.title, "folder": dest_dir,
+                     "status": "error", "error": str(e)}]
 
 
 def _dedupe_path(path: str) -> str:

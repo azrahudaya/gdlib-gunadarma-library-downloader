@@ -276,7 +276,9 @@ def build_parser() -> argparse.ArgumentParser:
     sd.add_argument("--url", action="append", help="URL atau slug item (boleh berkali-kali)")
     sd.add_argument("-n", "--limit", type=int, default=10,
                     help="maksimum item dari hasil pencarian (default 10)")
-    sd.add_argument("-o", "--out", default="downloads", help="folder tujuan")
+    sd.add_argument("-o", "--out", default=os.path.expanduser("~/Downloads/gdlib"),
+                    help="folder induk tujuan (default: ~/Downloads/gdlib); "
+                         "tiap karya dibuatkan subfolder sendiri")
     sd.add_argument("--jenis", help="filter jenis penulisan, mis. SKRIPSI")
     sd.add_argument("--jurusan", help="filter jurusan/fakultas, mis. \"Informatika\"")
     sd.add_argument("--tahun", help="filter tahun, mis. 2024")

@@ -241,7 +241,8 @@ class GdTui(App):
             username=user, password=pw,
             session_file=getattr(args, "session_file", None),
         )
-        self.out_dir = os.path.abspath(getattr(args, "out", None) or "downloads")
+        self.out_dir = os.path.abspath(
+            os.path.expanduser(getattr(args, "out", None) or "~/Downloads/gdlib"))
         self.items = []
         self.total = None
         self.page = 1
@@ -380,9 +381,12 @@ class GdTui(App):
     def _show_detail(self, item) -> None:
         lines = [f"[bold]{item.title}[/bold]"]
         if item.author:
-            lines.append(f"[dim]Penulis/NPM:[/dim] {item.author}")
+            lines.append(f"[dim]Penulis/NPM:[/dim] {item.author}"
+                         + (f" ({item.npm})" if item.npm else ""))
         if item.year:
             lines.append(f"[dim]Tahun:[/dim] {item.year}")
+        if item.meta_extra:
+            lines.append(f"[dim]Prodi/Fakultas:[/dim] {item.meta_extra}")
         if item.views:
             lines.append(f"[dim]{item.views}[/dim]")
         lines.append(f"[dim]Jenis:[/dim] {item.tag or item.kind}")
