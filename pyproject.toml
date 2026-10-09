@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gdlib-dl"
+version = "1.0.0"
+description = "CLI/TUI downloader for the Universitas Gunadarma library (library.gunadarma.ac.id)"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.28",
+    "beautifulsoup4>=4.11",
+    "rich>=13.0",
+    "textual>=0.60",
+]
+
+[project.scripts]
+gdlib = "gdlib.cli:main"
+
+[tool.setuptools]
+packages = ["gdlib"]
