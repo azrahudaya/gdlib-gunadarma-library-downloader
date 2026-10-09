@@ -380,15 +380,27 @@ class GunadarmaClient:
         try:
             with open(self.session_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            for k, v in data.get("cookies", {}).items():
-                self.s.cookies.set(k, v, domain="library.gunadarma.ac.id")
+            for name, ck in data.get("cookies", {}).items():
+                if isinstance(ck, dict):
+                    self.s.cookies.set(name, ck.get("value", ""),
+                                       domain=ck.get("domain") or "library.gunadarma.ac.id",
+                                       path=ck.get("path") or "/")
+                else:  # kompatibilitas format lama {name: value}
+                    self.s.cookies.set(name, ck, domain="library.gunadarma.ac.id")
             self.logged_in = bool(data.get("logged_in"))
+            if data.get("username"):
+                self.username = self.username or data["username"]
         except Exception:
             pass
 
     def _save_session(self) -> None:
         try:
-            cookies = {c.name: c.value for c in self.s.cookies}
+            # Simpan lengkap dengan domain/path agar tidak jadi cookie duplikat
+            # saat dimuat kembali (server memakai domain .gunadarma.ac.id).
+            cookies = {
+                c.name: {"value": c.value, "domain": c.domain, "path": c.path}
+                for c in self.s.cookies
+            }
             with open(self.session_file, "w", encoding="utf-8") as f:
                 json.dump({"cookies": cookies, "logged_in": self.logged_in,
                            "username": self.username}, f)
@@ -418,21 +430,44 @@ class GunadarmaClient:
                 "Nomor anggota / password belum diisi. Isi file .env "
                 "(GDLIB_USERNAME, GDLIB_PASSWORD) atau pakai --username/--password."
             )
+        # Bersihkan cookie lama dulu. Sesi tersimpan memakai domain host-only
+        # (library.gunadarma.ac.id); server mengirim cookie domain
+        # (.gunadarma.ac.id). Bila keduanya ada, request mengirim dua cookie
+        # bernama sama dan server memakai yang lama -> sesi tidak valid.
+        self.s.cookies.clear()
         r = self.s.get(f"{BASE}/login", timeout=self.timeout)
         if _looks_closed(r.status_code, r.text):
             raise ClosedError(_closed_message(r.text))
         soup = BeautifulSoup(r.text, "html.parser")
+        form = soup.select_one('form input[name="password"]')
+        form = form.find_parent("form") if form else None
         tok = soup.select_one('form input[name="_token"]')
         if not tok:
             raise AuthError("Tidak menemukan token login (struktur halaman berubah?).")
         data = {"_token": tok.get("value", ""), "nomor_anggota": u, "password": p}
-        r = self.s.post(f"{BASE}/login", data=data,
-                        headers={"Referer": f"{BASE}/login"}, timeout=self.timeout)
+        # Sertakan hidden field asli (mis. return_url) agar POST diterima
+        # dan diarahkan ke halaman yang benar, bukan kembali ke /login.
+        if form:
+            for h in form.select('input[type="hidden"]'):
+                name = h.get("name")
+                if name:
+                    data.setdefault(str(name), str(h.get("value") or ""))
+        action = str(form.get("action")) if (form and form.get("action")) else f"{BASE}/login"
+        r = self.s.post(action, data=data, headers={"Referer": f"{BASE}/login"},
+                        timeout=self.timeout, allow_redirects=False)
         if _looks_closed(r.status_code, r.text):
             raise ClosedError(_closed_message(r.text))
-        if "Akses login gagal" in r.text or 'name="password"' in r.text:
+        if "Akses login gagal" in r.text:
             self.logged_in = False
             raise AuthError("Login gagal: periksa nomor anggota / password.")
+        # Sukses = diarahkan (302) ke halaman internal, bukan balik ke /login.
+        location = r.headers.get("location", "")
+        if not (r.status_code in (301, 302, 303, 307, 308)
+                and location and "/login" not in location):
+            self.logged_in = False
+            raise AuthError(
+                "Login gagal: server tidak mengarahkan ke halaman masuk. "
+                "Periksa nomor anggota / password.")
         self.logged_in = True
         self.username = u
         self._save_session()
