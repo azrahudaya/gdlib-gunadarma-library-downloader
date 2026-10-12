@@ -1,32 +1,37 @@
-# gdlib
+# gdlib: Gunadarma Library Downloader
 
-> CLI + TUI untuk mengunduh koleksi **Perpustakaan Universitas Gunadarma**
-> (`library.gunadarma.ac.id`) — Repository (PI/Skripsi/Tesis/Disertasi),
-> E-Paper, E-Book UG, Jurnal Ilmiah, dan pencarian Katalog OPAC.
+CLI and TUI tool to download collections from the **Universitas Gunadarma Library** (`library.gunadarma.ac.id`): repository (PI/Skripsi/Tesis/Disertasi), e-paper, e-book, journals, and OPAC catalog search.
 
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 ![Interface](https://img.shields.io/badge/interface-CLI%20%2B%20TUI-blue)
 ![TUI](https://img.shields.io/badge/TUI-Textual-5A2D82)
-![Status](https://img.shields.io/badge/status-aktif-success)
+![Status](https://img.shields.io/badge/status-active-success)
 
-Memakai **akun kampus kamu sendiri**. Kredensial disimpan lokal di `.env`
-(izin `600`, di-gitignore) dan hanya dikirim ke server Gunadarma.
+It uses **your own campus account**. Credentials are stored locally in `.env` (mode `600`, gitignored) and sent only to the Gunadarma server.
 
-## Fitur
+## Problem
 
-- **Pencarian** lintas koleksi: Repository, E-Paper, E-Book, Jurnal, Katalog.
-- **Filter repository** per jurusan (69 prodi), jenis penulisan, tahun, NPM,
-  penulis, dan pembimbing.
-- **Unduh PDF** satu per satu atau batch — tiap karya masuk subfolder sendiri
-  (`<JUDUL> (<NPM>, <TAHUN>)/`).
-- **Resumable batch** — proses yang terhenti bisa dilanjutkan tanpa mengulang.
-- **TUI interaktif** (Textual) + **CLI** untuk skrip.
+Students who log in to the Gunadarma library often can only **read** documents in the browser. There is **no download button** on the reader page, so the PDFs cannot be saved or studied offline. Downloading one file at a time, by hand, is slow and painful.
 
-## Instalasi
+This tool solves that:
 
-Butuh Python 3.9+.
+- Downloads the actual PDF files that the web reader hides.
+- Supports **batch download** of many works in one run, and can resume if interrupted.
+- Saves every work into its own folder, so students can collect and study the PDFs offline.
+
+## Features
+
+- Search across collections: repository, e-paper, e-book, journal, catalog.
+- Filter repository by major (69 programs), document type, year, NPM, author, and advisor.
+- Download a single PDF or many at once, one folder per work (`<TITLE> (<NPM>, <YEAR>)/`).
+- Resumable batch process: rerun the same command and it skips finished items.
+- Interactive TUI (Textual) plus a CLI for scripting.
+
+## Install
+
+Requires Python 3.9+.
 
 ```bash
 git clone https://github.com/azrahudaya/gdlib-gunadarma-library-downloader.git
@@ -35,7 +40,7 @@ python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 ```
 
-## Konfigurasi
+## Configuration
 
 ```bash
 cp .env.example .env
@@ -43,38 +48,46 @@ cp .env.example .env
 
 ```ini
 GDLIB_USERNAME=10123456789      # NPM / NIP
-GDLIB_PASSWORD=passwordkamu
+GDLIB_PASSWORD=yourpassword
 ```
 
-## Penggunaan
+## Usage
 
 ```bash
-./gdlib.sh                                    # buka TUI
+./gdlib.sh                                    # open the TUI
 
-./gdlib.sh login                              # simpan sesi login
+./gdlib.sh login                              # save the login session
 ./gdlib.sh search repository "machine learning"
 ./gdlib.sh search repository "iot" --jurusan Informatika --jenis SKRIPSI --tahun 2024
-./gdlib.sh download repository "jaringan" -n 3 -o ~/Downloads/gdlib
+./gdlib.sh download repository "network security" -n 3 -o ~/Downloads/gdlib
 
 # Batch (resumable)
 ./.venv/bin/python scripts/batch_download.py --limit 50 \
     --jurusan 6 --jenis skripsi --tahun 2026 -o ~/Downloads/gdlib
 ```
 
-**Pintasan TUI:** `F1` login · `F2` jurusan · `F5` cari · `F9` unduh item ·
-`F10` unduh semua di halaman · `Ctrl+Q` keluar.
+**TUI shortcuts:** `F1` login, `F2` major, `F5` search, `F9` download selected, `F10` download page, `Ctrl+Q` quit.
 
-## Catatan
+## Notes
 
-- **Jam Bebas Akses:** situs menutup akses publik pukul **23:00–03:00 WIB**
-  (HTTP 503). Aplikasi menampilkan pesan yang jelas, bukan error.
-- Sebagian berkas (LISTING PROGRAM, JURNAL WORD, dsb.) memang tidak
-  dipublikasikan sehingga tidak bisa diunduh.
-- Gunakan **hanya untuk keperluan akademik pribadi**. Hormati hak cipta dan
-  ketentuan layanan perpustakaan; jangan menyebarkan ulang berkas.
-- Struktur HTML situs dapat berubah; selektor di `gdlib/api.py` mungkin perlu
-  disesuaikan.
+- **Free Access Hours:** the site blocks public access from **23:00 to 03:00 WIB** (HTTP 503). The app shows a clear message instead of an error.
+- Some files (LISTING PROGRAM, JURNAL WORD, and similar) are not published, so they cannot be downloaded.
+- Use this **for personal academic purposes only**. Respect copyright and the library terms of service. Do not redistribute the files.
+- The site HTML can change at any time, so selectors in `gdlib/api.py` may need updates.
 
-## Lisensi
+## Contributors
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/azrahudaya">
+        <img src="https://github.com/azrahudaya.png?size=120" width="120" alt="Azra Hudaya" /><br />
+        <sub><b>Azra Hudaya</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+## License
 
 [MIT](LICENSE)
