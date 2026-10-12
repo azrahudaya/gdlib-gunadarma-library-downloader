@@ -29,8 +29,8 @@ Memakai **akun kampus kamu sendiri**. Kredensial disimpan lokal di `.env`
 Butuh Python 3.9+.
 
 ```bash
-git clone https://github.com/azrahudaya/gdlib.git
-cd gdlib
+git clone https://github.com/azrahudaya/gdlib-gunadarma-library-downloader.git
+cd gdlib-gunadarma-library-downloader
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 ```
