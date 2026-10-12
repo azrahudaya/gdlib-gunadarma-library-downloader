@@ -83,7 +83,7 @@ GDLIB_PASSWORD=yourpassword
 
 ## Contributors
 
-<a href="https://github.com/azrahudaya"><img src="https://github.com/azrahudaya.png?size=48" width="48" alt="Azra Hudaya" />&nbsp;<sub><b>Azra Hudaya</b></sub></a>
+<a href="https://github.com/azrahudaya"><img src="https://github.com/azrahudaya.png?size=48" width="48" alt="Contributor" /></a>
 
 ## License
 
