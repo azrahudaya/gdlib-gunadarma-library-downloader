@@ -75,18 +75,15 @@ GDLIB_PASSWORD=yourpassword
 - Use this **for personal academic purposes only**. Respect copyright and the library terms of service. Do not redistribute the files.
 - The site HTML can change at any time, so selectors in `gdlib/api.py` may need updates.
 
+## Screenshots
+
+![Search results](docs/images/search.png)
+
+![Major filter](docs/images/filters.png)
+
 ## Contributors
 
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/azrahudaya">
-        <img src="https://github.com/azrahudaya.png?size=120" width="120" alt="Azra Hudaya" /><br />
-        <sub><b>Azra Hudaya</b></sub>
-      </a>
-    </td>
-  </tr>
-</table>
+<a href="https://github.com/azrahudaya"><img src="https://github.com/azrahudaya.png?size=48" width="48" alt="Azra Hudaya" />&nbsp;<sub><b>Azra Hudaya</b></sub></a>
 
 ## License
 
